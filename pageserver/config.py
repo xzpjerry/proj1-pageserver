@@ -30,7 +30,6 @@ logging.basicConfig(format='%(levelname)s:%(message)s',
 log = logging.getLogger(__name__)
 HERE = os.path.dirname(__file__)
 
-
 def command_line_args():
     """Returns namespace with settings from command line"""
     log.debug("-> Command line args")
@@ -140,5 +139,4 @@ def configuration(proxied=False):
             cli_vars[var_upper] = ini[var_lower]
 
     imply_types(cli_vars)
-
     return cli
