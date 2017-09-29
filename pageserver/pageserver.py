@@ -125,7 +125,7 @@ def respond(sock):
   parts = request.split()
   REQUEST_FILE_PATH = config.HERE + config.configuration().DOCROOT + parts[1]
 
-  if not check_legal(REQUEST_FILE_PATH):
+  if check_legal(REQUEST_FILE_PATH):
     has_file = os.path.isfile(REQUEST_FILE_PATH)
     if len(parts) > 1 and parts[0] == "GET":
       if has_file:
@@ -136,6 +136,8 @@ def respond(sock):
       log.info("Unhandled request: {}".format(request))
       transmit(STATUS_NOT_IMPLEMENTED, sock)
       transmit("\nI don't handle this request: {}\n".format(request), sock)
+  else:
+    transmit(STATUS_FORBIDDEN, sock)
 
   sock.shutdown(socket.SHUT_RDWR)
   sock.close()
