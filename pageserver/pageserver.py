@@ -112,7 +112,7 @@ def respond(sock):
     return 0
 
   def check_legal(REQUEST_PATH):
-    if check_legal_files(REQUEST_PATH) or check_unix_rules(REQUEST_PATH):
+    if check_legal_files(REQUEST_PATH) and check_unix_rules(REQUEST_PATH):
       return 1
     return 0
 
