@@ -123,7 +123,8 @@ def respond(sock):
   log.info("Request was {}\n***\n".format(request))
 
   parts = request.split()
-  REQUEST_FILE_PATH = config.HERE + config.configuration().DOCROOT + parts[1]
+  REQUEST_FILE_PATH = os.path.join(config.HERE, config.configuration().DOCROOT + parts[1])
+  print(REQUEST_FILE_PATH)
 
   if check_legal(REQUEST_FILE_PATH):
     has_file = os.path.isfile(REQUEST_FILE_PATH)
