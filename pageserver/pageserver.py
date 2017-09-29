@@ -27,6 +27,9 @@ import _thread   # Response computation runs concurrently with main program
 
 UNIX_RULE1 = re.compile(r'.*[\/\\]{2}.*')
 UNIX_RULE2 = re.compile(r'.*\~.*')
+THIS_PROJECT_RULE1 = re.compile(r'.*.html')
+THIS_PROJECT_RULE2 = re.compile(r'.*.css')
+
 
 def listen(portnum):
   """
@@ -77,21 +80,18 @@ STATUS_FORBIDDEN = "HTTP/1.0 403 Forbidden\n\n"
 STATUS_NOT_FOUND = "HTTP/1.0 404 Not Found\n\n"
 STATUS_NOT_IMPLEMENTED = "HTTP/1.0 401 Not Implemented\n\n"
 
+def transmit(msg, sock):
+  """It might take several sends to get the whole message out"""
+  sent = 0
+  while sent < len(msg):
+    buff = bytes(msg[sent:], encoding="utf-8")
+    sent += sock.send(buff)
 
 def respond(sock):
   """
   This server responds only to GET requests (not PUT, POST, or UPDATE).
   Any valid GET request is answered with an ascii graphic of a cat.
   """
-  sent = 0
-  request = sock.recv(1024)  # We accept only short requests
-  request = str(request, encoding='utf-8', errors='strict')
-  log.info("--- Received request ----")
-  log.info("Request was {}\n***\n".format(request))
-
-  parts = request.split()
-  REQUEST_FILE_PATH = config.HERE + config.configuration().DOCROOT + parts[1]
-
   def send_request(REQUEST_PATH):
     transmit(STATUS_OK, sock)
     REQUEST_FILE = open(REQUEST_PATH)
@@ -103,10 +103,29 @@ def respond(sock):
   def check_unix_rules(REQUEST_PATH):
     if UNIX_RULE1.match(REQUEST_PATH) or UNIX_RULE2.match(REQUEST_PATH):
       transmit(STATUS_FORBIDDEN, sock)
+      return 0
+    return 1
+
+  def check_legal_files(REQUEST_PATH):
+    if THIS_PROJECT_RULE1.match(REQUEST_PATH) or THIS_PROJECT_RULE2.match(REQUEST_PATH):
       return 1
     return 0
 
-  if not check_unix_rules(REQUEST_FILE_PATH):
+  def check_legal(REQUEST_PATH):
+    if check_legal_files(REQUEST_PATH) or check_unix_rules(REQUEST_PATH):
+      return 1
+    return 0
+
+  sent = 0
+  request = sock.recv(1024)  # We accept only short requests
+  request = str(request, encoding='utf-8', errors='strict')
+  log.info("--- Received request ----")
+  log.info("Request was {}\n***\n".format(request))
+
+  parts = request.split()
+  REQUEST_FILE_PATH = config.HERE + config.configuration().DOCROOT + parts[1]
+
+  if not check_legal(REQUEST_FILE_PATH):
     has_file = os.path.isfile(REQUEST_FILE_PATH)
     if len(parts) > 1 and parts[0] == "GET":
       if has_file:
@@ -121,14 +140,6 @@ def respond(sock):
   sock.shutdown(socket.SHUT_RDWR)
   sock.close()
   return
-
-
-def transmit(msg, sock):
-  """It might take several sends to get the whole message out"""
-  sent = 0
-  while sent < len(msg):
-    buff = bytes(msg[sent:], encoding="utf-8")
-    sent += sock.send(buff)
 
 ###
 #
