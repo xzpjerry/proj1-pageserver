@@ -25,11 +25,8 @@ log = logging.getLogger(__name__)
 import socket    # Basic TCP/IP communication on the internet
 import _thread   # Response computation runs concurrently with main program
 
-UNIX_RULE1 = re.compile(r'.*[\/\\]{2}.*')
-UNIX_RULE2 = re.compile(r'.*\~.*')
-THIS_PROJECT_RULE1 = re.compile(r'.*.html')
-THIS_PROJECT_RULE2 = re.compile(r'.*.css')
-
+UNIX_RULE = re.compile(r'.*([\/\\]{2}|\~).*')
+THIS_PROJECT_RULE = re.compile(r'.*.(html|css)$')
 
 def listen(portnum):
   """
@@ -101,13 +98,13 @@ def respond(sock):
     return
 
   def check_unix_rules(REQUEST_PATH):
-    if UNIX_RULE1.match(REQUEST_PATH) or UNIX_RULE2.match(REQUEST_PATH):
+    if UNIX_RULE.match(REQUEST_PATH):
       transmit(STATUS_FORBIDDEN, sock)
       return 0
     return 1
 
   def check_legal_files(REQUEST_PATH):
-    if THIS_PROJECT_RULE1.match(REQUEST_PATH) or THIS_PROJECT_RULE2.match(REQUEST_PATH):
+    if THIS_PROJECT_RULE.match(REQUEST_PATH):
       return 1
     return 0
 
